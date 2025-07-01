@@ -1,0 +1,12 @@
+{
+  "name": "mi-lambda-demo",
+  "version": "1.0.0",
+  "description": "POC de Lambda con Serverless Framework y CodeBuild",
+  "main": "handler.js",
+  "scripts": {
+    "deploy": "serverless deploy",
+    "remove": "serverless remove"
+  },
+  "dependencies": {},
+  "devDependencies": {}
+}
