@@ -3,9 +3,9 @@ version: 0.2
 phases:
   install:
     runtime-versions:
-      nodejs: 20
+      nodejs: 18
     commands:
-      - npm install -g serverless
+      - npm install -g serverless@3.38.0  # ⬅️ Versión estable sin login
       - npm install
   build:
     commands:
