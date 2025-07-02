@@ -5,8 +5,21 @@ phases:
     runtime-versions:
       nodejs: 20
     commands:
-      - npm install -g serverless@3.38.0  # ⬅️ Versión estable sin login
+      - echo "▶ Instalando dependencias..."
+      - npm install -g serverless@3.38.0
       - npm install
+
+      - echo "▶ Instalando git-secrets..."
+      - git clone https://github.com/awslabs/git-secrets.git
+      - cd git-secrets && sudo make install && cd ..
+
+      - echo "▶ Configurando git-secrets..."
+      - git secrets --install
+      - git secrets --register-aws
   build:
     commands:
+      - echo "▶ Ejecutando análisis de secretos..."
+      - git secrets --scan || exit 1
+
+      - echo "▶ Desplegando Lambda con Serverless..."
       - sls deploy --stage dev
