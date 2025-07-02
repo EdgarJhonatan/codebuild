@@ -9,9 +9,13 @@ phases:
       - npm install -g serverless@3.38.0
       - npm install
 
+      - echo "▶ Inicializando repo Git temporal..."
+      - git init
+      - git add .
+
       - echo "▶ Instalando git-secrets..."
       - git clone https://github.com/awslabs/git-secrets.git
-      - cd git-secrets && sudo make install && cd ..
+      - cd git-secrets && make install && cd ..
 
       - echo "▶ Configurando git-secrets..."
       - git secrets --install
