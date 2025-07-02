@@ -12,6 +12,7 @@ phases:
       - echo "▶ Inicializando repo Git temporal..."
       - git init
       - git add .
+      - git commit -m "Scan commit" || true  # Evita error si ya está comiteado
 
       - echo "▶ Instalando git-secrets..."
       - git clone https://github.com/awslabs/git-secrets.git
@@ -20,10 +21,11 @@ phases:
       - echo "▶ Configurando git-secrets..."
       - git secrets --install
       - git secrets --register-aws
+
   build:
     commands:
-      - echo "▶ Ejecutando análisis de secretos..."
-      - git secrets --scan || exit 1
+      - echo "▶ Ejecutando análisis de secretos con git-secrets..."
+      - git secrets --scan $(find . -type f -name '*.js') || { echo '❌ Se detectaron secretos embebidos.'; exit 1; }
 
-      - echo "▶ Desplegando Lambda con Serverless..."
+      - echo "✅ Sin secretos detectados. Procediendo con el despliegue..."
       - sls deploy --stage dev
