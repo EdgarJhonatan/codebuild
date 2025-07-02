@@ -1,15 +1,29 @@
-service: mi-lambda-demo
+version: 0.2
 
-provider:
-  name: aws
-  runtime: nodejs20.x
-  region: us-east-2
-  deploymentBucket:
-    name: serverlesszoetechd01
-functions:
-  hello:
-    handler: handler.hello
-    events:
-      - http:
-          path: hello
-          method: get
+phases:
+  install:
+    runtime-versions:
+      nodejs: 20
+    commands:
+      - echo "▶ Instalando dependencias..."
+      - npm install -g serverless@3.38.0
+      - npm install
+
+      - echo "▶ Inicializando repo Git temporal..."
+      - git init
+      - git add .
+
+      - echo "▶ Instalando git-secrets..."
+      - git clone https://github.com/awslabs/git-secrets.git
+      - cd git-secrets && make install && cd ..
+
+      - echo "▶ Configurando git-secrets..."
+      - git secrets --install
+      - git secrets --register-aws
+  build:
+    commands:
+      - echo "▶ Ejecutando análisis de secretos..."
+      - git secrets --scan || exit 1
+
+      - echo "▶ Desplegando Lambda con Serverless..."
+      - sls deploy --stage dev
