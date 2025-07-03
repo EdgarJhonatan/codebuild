@@ -37,13 +37,13 @@ phases:
       - |
         if [ -f "package-lock.json" ]; then
           echo "🟢 Proyecto Node.js detectado"
-          trivy fs --exit-code 1 --scanners vuln --severity HIGH,CRITICAL --language npm .
+          trivy fs --exit-code 1 --scanners vuln --severity HIGH,CRITICAL .
         elif [ -f "pom.xml" ]; then
           echo "🟠 Proyecto Java detectado (Maven)"
-          trivy fs --exit-code 1 --scanners vuln --severity HIGH,CRITICAL --language java .
+          trivy fs --exit-code 1 --scanners vuln --severity HIGH,CRITICAL .
         elif [ -f "requirements.txt" ]; then
           echo "🔵 Proyecto Python detectado"
-          trivy fs --exit-code 1 --scanners vuln --severity HIGH,CRITICAL --language python .
+          trivy fs --exit-code 1 --scanners vuln --severity HIGH,CRITICAL .
         else
           echo "⚠️ No se detectó lenguaje compatible. Escaneo genérico con Trivy..."
           trivy fs --exit-code 1 --scanners vuln --severity HIGH,CRITICAL .
@@ -56,12 +56,8 @@ phases:
       # - export PATH=$PATH:$PWD/sonar-scanner-5.0.1.3006-linux/bin
       # - sonar-scanner
       # 🔒 Requiere archivo 'sonar-project.properties' en raíz y variable $SONAR_TOKEN
-      # -------------------------------------------------------------------------
+      # --------------------------------------------------------------------------
 
   post_build:
     commands:
       - echo "✅ Validaciones finalizadas. Listo para revisión del PR."
-
-artifacts:
-  files:
-    - '**/*'
