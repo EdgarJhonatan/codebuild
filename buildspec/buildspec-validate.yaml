@@ -37,37 +37,29 @@ phases:
       - git secrets --scan $(find . -type f -name '*.js') || { echo '❌ Se detectaron secretos embebidos.'; exit 1; }
 
       - echo "▶ Ejecutando escaneo de vulnerabilidades con Trivy (modo inteligente)..."
-      - |
-        if [ -f "package-lock.json" ] || [ -f "yarn.lock" ] || [ -f "npm-shrinkwrap.json" ]; then
-          echo "🟢 Proyecto Node.js detectado"
-          trivy fs --exit-code 1 --scanners vuln --severity HIGH,CRITICAL .
+      - if [ -f "package-lock.json" ] || [ -f "yarn.lock" ] || [ -f "npm-shrinkwrap.json" ]; then
+          echo "🟢 Proyecto Node.js detectado";
+          trivy fs --exit-code 1 --scanners vuln --severity HIGH,CRITICAL .;
         elif [ -f "pom.xml" ]; then
-          echo "🟠 Proyecto Java detectado (Maven)"
-          trivy fs --exit-code 1 --scanners vuln --severity HIGH,CRITICAL .
+          echo "🟠 Proyecto Java detectado (Maven)";
+          trivy fs --exit-code 1 --scanners vuln --severity HIGH,CRITICAL .;
         elif [ -f "requirements.txt" ]; then
-          echo "🔵 Proyecto Python detectado"
-          trivy fs --exit-code 1 --scanners vuln --severity HIGH,CRITICAL .
+          echo "🔵 Proyecto Python detectado";
+          trivy fs --exit-code 1 --scanners vuln --severity HIGH,CRITICAL .;
         else
-          echo "⚠️ No se detectó lenguaje compatible. Escaneo genérico con Trivy..."
-          trivy fs --exit-code 1 --scanners vuln --severity HIGH,CRITICAL .
+          echo "⚠️ No se detectó lenguaje compatible. Escaneo genérico con Trivy...";
+          trivy fs --exit-code 1 --scanners vuln --severity HIGH,CRITICAL .;
         fi
 
       - echo "▶ Detectando tipo de proyecto..."
-      - |
-        if [ -f "serverless.yml" ]; then
-          echo "📦 Proyecto Serverless Framework detectado"
-        fi
-
-        if [ -f "Dockerfile" ]; then
-          echo "🐳 Proyecto Docker detectado (solo detección, sin escaneo de imagen aún)"
-        fi
-
-        if find . -name "*.tf" -o -name "*.yml" -o -name "*.yaml" -o -name "*.json" | grep -q .; then
-          echo "🏗️ Proyecto IaC detectado (YAML, JSON o Terraform)"
-          echo "🧹 Limpiando carpetas temporales para evitar falsos positivos..."
-          rm -rf git-secrets
-          echo "▶ Ejecutando análisis con Checkov..."
-          checkov -d . --quiet --soft-fail
+      - if [ -f "serverless.yml" ]; then echo "📦 Proyecto Serverless Framework detectado"; fi
+      - if [ -f "Dockerfile" ]; then echo "🐳 Proyecto Docker detectado (solo detección, sin escaneo de imagen aún)"; fi
+      - if find . -name "*.tf" -o -name "*.yml" -o -name "*.yaml" -o -name "*.json" | grep -q .; then
+          echo "🏗️ Proyecto IaC detectado (YAML, JSON o Terraform)";
+          echo "🧹 Limpiando carpetas temporales para evitar falsos positivos...";
+          rm -rf git-secrets;
+          echo "▶ Ejecutando análisis con Checkov...";
+          checkov -d . --quiet --soft-fail;
         fi
 
   post_build:
