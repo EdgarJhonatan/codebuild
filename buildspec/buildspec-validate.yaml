@@ -5,59 +5,39 @@ phases:
     runtime-versions:
       nodejs: 20
     commands:
-      - echo "▶ Instalando dependencias..."
+      - echo "▶ Instalando Node.js y dependencias..."
+      - n 20 && rm -rf /tmp/*
       - npm install -g serverless@3.38.0
       - npm install
-
       - echo "▶ Inicializando repositorio Git temporal..."
       - git init
       - git config user.email "codebuild@example.com"
       - git config user.name "AWS CodeBuild"
       - git add .
       - git commit -m "scan commit" || true
-
       - echo "▶ Instalando git-secrets..."
       - git clone https://github.com/awslabs/git-secrets.git
       - cd git-secrets && make install && cd ..
-
-      - echo "▶ Configurando git-secrets..."
       - git secrets --install
       - git secrets --register-aws
-
       - echo "▶ Instalando Trivy..."
       - curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh
       - cp ./bin/trivy /usr/local/bin/
-
   build:
     commands:
       - echo "▶ Ejecutando análisis de secretos con git-secrets..."
       - git secrets --scan $(find . -type f -name '*.js') || { echo '❌ Se detectaron secretos embebidos.'; exit 1; }
-
-      - echo "▶ Ejecutando escaneo de vulnerabilidades con Trivy (modo inteligente)..."
+      - echo "▶ Ejecutando escaneo de vulnerabilidades con Trivy..."
       - |
-        if [ -f "package-lock.json" ]; then
+        echo "📂 Archivos en proyecto:"
+        find . -type f
+        if [ -f "package-lock.json" ] || [ -f "yarn.lock" ] || [ -f "npm-shrinkwrap.json" ]; then
           echo "🟢 Proyecto Node.js detectado"
           trivy fs --exit-code 1 --scanners vuln --severity HIGH,CRITICAL .
-        elif [ -f "pom.xml" ]; then
-          echo "🟠 Proyecto Java detectado (Maven)"
-          trivy fs --exit-code 1 --scanners vuln --severity HIGH,CRITICAL .
-        elif [ -f "requirements.txt" ]; then
-          echo "🔵 Proyecto Python detectado"
-          trivy fs --exit-code 1 --scanners vuln --severity HIGH,CRITICAL .
         else
-          echo "⚠️ No se detectó lenguaje compatible. Escaneo genérico con Trivy..."
+          echo "⚠️ No se detectaron archivos de lock. Escaneo genérico..."
           trivy fs --exit-code 1 --scanners vuln --severity HIGH,CRITICAL .
         fi
-
-      # -------------------- SONARQUBE (pendiente de activar) --------------------
-      # - echo "▶ Ejecutando análisis de calidad con SonarQube..."
-      # - curl -sSLo sonar-scanner.zip https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-5.0.1.3006-linux.zip
-      # - unzip sonar-scanner.zip
-      # - export PATH=$PATH:$PWD/sonar-scanner-5.0.1.3006-linux/bin
-      # - sonar-scanner
-      # 🔒 Requiere archivo 'sonar-project.properties' en raíz y variable $SONAR_TOKEN
-      # --------------------------------------------------------------------------
-
   post_build:
     commands:
       - echo "✅ Validaciones finalizadas. Listo para revisión del PR."
