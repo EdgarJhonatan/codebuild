@@ -33,8 +33,21 @@ phases:
       - echo "▶ Ejecutando análisis de secretos con git-secrets..."
       - git secrets --scan $(find . -type f -name '*.js') || { echo '❌ Se detectaron secretos embebidos.'; exit 1; }
 
-      - echo "▶ Ejecutando escaneo de vulnerabilidades con Trivy (modo directorio)..."
-      - trivy fs --exit-code 1 --severity HIGH,CRITICAL . || { echo '❌ Vulnerabilidades críticas encontradas.'; exit 1; }
+      - echo "▶ Ejecutando escaneo de vulnerabilidades con Trivy (modo inteligente)..."
+      - |
+        if [ -f "package-lock.json" ]; then
+          echo "🟢 Proyecto Node.js detectado"
+          trivy fs --exit-code 1 --scanners vuln --severity HIGH,CRITICAL --language npm .
+        elif [ -f "pom.xml" ]; then
+          echo "🟠 Proyecto Java detectado (Maven)"
+          trivy fs --exit-code 1 --scanners vuln --severity HIGH,CRITICAL --language java .
+        elif [ -f "requirements.txt" ]; then
+          echo "🔵 Proyecto Python detectado"
+          trivy fs --exit-code 1 --scanners vuln --severity HIGH,CRITICAL --language python .
+        else
+          echo "⚠️ No se detectó lenguaje compatible. Escaneo genérico con Trivy..."
+          trivy fs --exit-code 1 --scanners vuln --severity HIGH,CRITICAL .
+        fi
 
       # -------------------- SONARQUBE (pendiente de activar) --------------------
       # - echo "▶ Ejecutando análisis de calidad con SonarQube..."
@@ -42,9 +55,13 @@ phases:
       # - unzip sonar-scanner.zip
       # - export PATH=$PATH:$PWD/sonar-scanner-5.0.1.3006-linux/bin
       # - sonar-scanner
-      # 🔒 Requiere archivo 'sonar-project.properties' y variable $SONAR_TOKEN
-      # ----------------------------------------------------------------------------
+      # 🔒 Requiere archivo 'sonar-project.properties' en raíz y variable $SONAR_TOKEN
+      # -------------------------------------------------------------------------
 
   post_build:
     commands:
       - echo "✅ Validaciones finalizadas. Listo para revisión del PR."
+
+artifacts:
+  files:
+    - '**/*'
