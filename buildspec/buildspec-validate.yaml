@@ -5,57 +5,46 @@ phases:
     runtime-versions:
       nodejs: 20
     commands:
-      - echo "▶ Instalando dependencias del proyecto..."
+      - echo "▶ Instalando dependencias..."
+      - npm install -g serverless@3.38.0
       - npm install
 
       - echo "▶ Inicializando repositorio Git temporal..."
       - git init
+      - git config user.email "codebuild@example.com"
+      - git config user.name "AWS CodeBuild"
       - git add .
       - git commit -m "scan commit" || true
 
       - echo "▶ Instalando git-secrets..."
       - git clone https://github.com/awslabs/git-secrets.git
       - cd git-secrets && make install && cd ..
+
+      - echo "▶ Configurando git-secrets..."
       - git secrets --install
       - git secrets --register-aws
 
       - echo "▶ Instalando Trivy..."
       - curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh
-      - mv trivy /usr/local/bin/
-      - trivy --version
-
-      - echo "▶ Instalando SonarQube Scanner... (comentado por ahora)"
-      # - curl -sSLo sonar-scanner.zip https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-5.0.1.3006-linux.zip
-      # - unzip sonar-scanner.zip
-      # - export PATH=$PATH:$PWD/sonar-scanner-5.0.1.3006-linux/bin
+      - cp ./bin/trivy /usr/local/bin/
 
   build:
     commands:
-      - echo "▶ Detectando tipo de proyecto..."
+      - echo "▶ Ejecutando análisis de secretos con git-secrets..."
+      - git secrets --scan $(find . -type f -name '*.js') || { echo '❌ Se detectaron secretos embebidos.'; exit 1; }
 
-      - |
-        if [ -f "main.tf" ]; then
-          echo "🔍 Proyecto IaC (Terraform) detectado"
-          trivy config . --exit-code 1 --severity HIGH,CRITICAL
+      - echo "▶ Ejecutando escaneo de vulnerabilidades con Trivy (modo directorio)..."
+      - trivy fs --exit-code 1 --severity HIGH,CRITICAL . || { echo '❌ Vulnerabilidades críticas encontradas.'; exit 1; }
 
-        elif [ -f "Dockerfile" ]; then
-          echo "🐳 Docker detectado (comentado por ahora)"
-          # docker build -t myimage .
-          # trivy image myimage --exit-code 1 --severity HIGH,CRITICAL
+      # -------------------- SONARQUBE (pendiente de activar) --------------------
+      # - echo "▶ Ejecutando análisis de calidad con SonarQube..."
+      # - curl -sSLo sonar-scanner.zip https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-5.0.1.3006-linux.zip
+      # - unzip sonar-scanner.zip
+      # - export PATH=$PATH:$PWD/sonar-scanner-5.0.1.3006-linux/bin
+      # - sonar-scanner
+      # 🔒 Requiere archivo 'sonar-project.properties' y variable $SONAR_TOKEN
+      # ----------------------------------------------------------------------------
 
-        elif [ -f "serverless.yml" ]; then
-          echo "⚡ Proyecto Serverless (Lambda) detectado"
-          echo "▶ Ejecutando git-secrets..."
-          git secrets --scan $(find . -type f -name '*.js') || {
-            echo '❌ Se detectaron secretos embebidos.'; exit 1;
-          }
-
-          echo "▶ Ejecutando Trivy sobre el filesystem..."
-          trivy fs . --exit-code 1 --severity HIGH,CRITICAL
-
-          echo "▶ Ejecutando SonarQube Scanner... (comentado)"
-          # sonar-scanner
-
-        else
-          echo "❌ Tipo de proyecto no reconocido. Abortando..."
-          exit 1
+  post_build:
+    commands:
+      - echo "✅ Validaciones finalizadas. Listo para revisión del PR."
