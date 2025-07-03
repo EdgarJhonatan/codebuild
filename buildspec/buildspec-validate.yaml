@@ -75,15 +75,14 @@ phases:
       - echo "✅ Validaciones finalizadas. Listo para revisión del PR."
 
       - echo "📦 Generando resumen JSON para trazabilidad..."
-      - |
-        echo '{
-          "repository": "'"${CODEBUILD_SOURCE_REPO_URL}"'",
-          "branch": "'"${CODEBUILD_WEBHOOK_HEAD_REF}"'",
-          "commit": "'"${CODEBUILD_RESOLVED_SOURCE_VERSION}"'",
-          "status": "'"${CODEBUILD_BUILD_SUCCEEDING}"'",
-          "stage": "validate",
-          "timestamp": "'"$(date -u +"%Y-%m-%dT%H:%M:%SZ")"'"
-        }' > build-validate.json
+      - echo "{" > build-validate.json
+      - echo "  \"repository\": \"${CODEBUILD_SOURCE_REPO_URL}\"," >> build-validate.json
+      - echo "  \"branch\": \"${CODEBUILD_WEBHOOK_HEAD_REF}\"," >> build-validate.json
+      - echo "  \"commit\": \"${CODEBUILD_RESOLVED_SOURCE_VERSION}\"," >> build-validate.json
+      - echo "  \"status\": \"${CODEBUILD_BUILD_SUCCEEDING}\"," >> build-validate.json
+      - echo "  \"stage\": \"validate\"," >> build-validate.json
+      - echo "  \"timestamp\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"" >> build-validate.json
+      - echo "}" >> build-validate.json
 
       - echo "☁️ Subiendo a S3: s3://cb-logs-delga/validate/build-validate-${CODEBUILD_BUILD_ID}.json"
       - aws s3 cp build-validate.json s3://cb-logs-delga/validate/build-validate-${CODEBUILD_BUILD_ID}.json
