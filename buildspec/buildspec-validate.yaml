@@ -28,6 +28,9 @@ phases:
       - curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh
       - cp ./bin/trivy /usr/local/bin/
 
+      - echo "▶ Instalando Checkov..."
+      - pip install checkov
+
   build:
     commands:
       - echo "▶ Ejecutando análisis de secretos con git-secrets..."
@@ -49,14 +52,21 @@ phases:
           trivy fs --exit-code 1 --scanners vuln --severity HIGH,CRITICAL .
         fi
 
-      # -------------------- SONARQUBE (pendiente de activar) --------------------
-      # - echo "▶ Ejecutando análisis de calidad con SonarQube..."
-      # - curl -sSLo sonar-scanner.zip https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-5.0.1.3006-linux.zip
-      # - unzip sonar-scanner.zip
-      # - export PATH=$PATH:$PWD/sonar-scanner-5.0.1.3006-linux/bin
-      # - sonar-scanner
-      # 🔒 Requiere archivo 'sonar-project.properties' en raíz y variable $SONAR_TOKEN
-      # --------------------------------------------------------------------------
+      - echo "▶ Detectando tipo de proyecto..."
+      - |
+        if [ -f "serverless.yml" ]; then
+          echo "📦 Proyecto Serverless Framework detectado"
+        fi
+
+        if [ -f "Dockerfile" ]; then
+          echo "🐳 Proyecto Docker detectado (solo detección, sin escaneo de imagen aún)"
+        fi
+
+        if find . -name "*.tf" -o -name "*.yml" -o -name "*.yaml" -o -name "*.json" | grep -q .; then
+          echo "🏗️ Proyecto IaC detectado (YAML, JSON o Terraform)"
+          echo "▶ Ejecutando análisis con Checkov..."
+          checkov -d . --quiet --soft-fail
+        fi
 
   post_build:
     commands:
