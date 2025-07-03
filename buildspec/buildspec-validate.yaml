@@ -5,8 +5,10 @@ phases:
     runtime-versions:
       nodejs: 20
     commands:
-      - echo "▶ Instalando herramientas comunes..."
+      - echo "▶ Instalando dependencias del proyecto..."
       - npm install
+
+      - echo "▶ Inicializando repositorio Git temporal..."
       - git init
       - git add .
       - git commit -m "scan commit" || true
@@ -22,30 +24,38 @@ phases:
       - mv trivy /usr/local/bin/
       - trivy --version
 
+      - echo "▶ Instalando SonarQube Scanner... (comentado por ahora)"
+      # - curl -sSLo sonar-scanner.zip https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-5.0.1.3006-linux.zip
+      # - unzip sonar-scanner.zip
+      # - export PATH=$PATH:$PWD/sonar-scanner-5.0.1.3006-linux/bin
+
   build:
     commands:
       - echo "▶ Detectando tipo de proyecto..."
+
       - |
         if [ -f "main.tf" ]; then
-          echo "🔍 Proyecto Terraform detectado"
-          echo "▶ Ejecutando Trivy IaC scan..."
+          echo "🔍 Proyecto IaC (Terraform) detectado"
           trivy config . --exit-code 1 --severity HIGH,CRITICAL
+
         elif [ -f "Dockerfile" ]; then
-          echo "🐳 Proyecto Docker detectado"
-          echo "▶ Ejecutando Trivy scan de imagen (requiere build de imagen)..."
-          # Docker no está habilitado por defecto en CodeBuild. Dejar comentado:
+          echo "🐳 Docker detectado (comentado por ahora)"
           # docker build -t myimage .
-          # trivy image --exit-code 1 --severity HIGH,CRITICAL myimage
-          echo "▶ Escaneo de imagen comentado (requiere Docker enabled en CodeBuild)"
+          # trivy image myimage --exit-code 1 --severity HIGH,CRITICAL
+
         elif [ -f "serverless.yml" ]; then
           echo "⚡ Proyecto Serverless (Lambda) detectado"
-          echo "▶ Ejecutando análisis git-secrets..."
+          echo "▶ Ejecutando git-secrets..."
           git secrets --scan $(find . -type f -name '*.js') || {
             echo '❌ Se detectaron secretos embebidos.'; exit 1;
           }
-          echo "▶ Ejecutando Trivy para dependencias..."
+
+          echo "▶ Ejecutando Trivy sobre el filesystem..."
           trivy fs . --exit-code 1 --severity HIGH,CRITICAL
+
+          echo "▶ Ejecutando SonarQube Scanner... (comentado)"
+          # sonar-scanner
+
         else
           echo "❌ Tipo de proyecto no reconocido. Abortando..."
           exit 1
-        fi
