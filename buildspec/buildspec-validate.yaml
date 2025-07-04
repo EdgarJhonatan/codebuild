@@ -73,9 +73,11 @@ phases:
   post_build:
     commands:
       - echo "✅ Validaciones finalizadas. Listo para revisión del PR."
+      - echo "📦 Generando resumen JSON para trazabilidad..."
       - |
         cat > config.json <<EOF
         {
+          "repository": "${CODEBUILD_SOURCE_REPO_URL}",
           "nombre": "MiAplicacion",
           "version": "1.0",
           "entorno": "desarrollo"
