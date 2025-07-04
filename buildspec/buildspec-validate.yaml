@@ -36,7 +36,7 @@ phases:
       - echo "[" > log-validate.json
       - echo "▶ Ejecutando análisis de secretos con git-secrets..."
       - |
-        error_output=$(git secrets --scan $(find . -type f -name '*.js') 2>&1)
+        response_output=$(git secrets --scan $(find . -type f -name '*.js') 2>&1)
         if [ $? -eq 0 ]; then
           echo "✔ git-secrets PASSED"
           echo "{
@@ -51,7 +51,8 @@ phases:
           }," >> log-validate.json
         else
           echo "✘ git-secrets FAILED"
-          sanitized_error=$(echo "$error_output" | sed 's/"/\\"/g')
+          error=$(echo "$response_output" | grep -E "^\./.*:[0-9]+:" | head -n 1)
+          sanitized_error=$(echo "$error" | sed 's/"/\\"/g')
           echo "{
             \"check\": \"git-secrets\",
             \"result\": \"FAILED\",
@@ -62,7 +63,6 @@ phases:
             \"stage\": \"validate\",
             \"timestamp\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"
           }," >> log-validate.json
-          - echo "]" >> log-validate.json
           exit 1
         fi
 
@@ -238,12 +238,11 @@ phases:
             exit 1
           fi
         fi
-
-      - sed -i '$ s/,$//' log-validate.json
-      - echo "]" >> log-validate.json
       - echo "📄 Archivo final de trazabilidad generado:"
   post_build:
     commands:
+      - sed -i '$ s/,$//' log-validate.json
+      - echo "]" >> log-validate.json
       - echo "📄 Archivo final de trazabilidad generado:"
       - cat log-validate.json
 
