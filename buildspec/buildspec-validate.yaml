@@ -33,7 +33,6 @@ phases:
 
   build:
     commands:
-      - echo "[" > log-validate.json
       - echo "▶ Ejecutando análisis de secretos con git-secrets..."
       - |
         response_output=$(git secrets --scan $(find . -type f -name '*.js') 2>&1)
@@ -242,7 +241,6 @@ phases:
   post_build:
     commands:
       - sed -i '$ s/,$//' log-validate.json
-      - echo "]" >> log-validate.json
       - echo "📄 Archivo final de trazabilidad generado:"
       - cat log-validate.json
 
