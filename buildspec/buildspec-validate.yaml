@@ -33,16 +33,35 @@ phases:
 
   build:
     commands:
-      - echo "[" > trace.json
+      - echo "[" > log-validate.json
       - echo "▶ Ejecutando análisis de secretos con git-secrets..."
       - |
         if git secrets --scan $(find . -type f -name '*.js'); then
-          echo "{\"check\":\"git-secrets\",\"result\":\"PASSED\",\"error\":\"\",\"timestamp\":\"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"}," >> trace.json
+          echo "✔ git-secrets PASSED"
+          echo "{
+            \"check\": \"git-secrets\",
+            \"result\": \"PASSED\",
+            \"details\": \"success\",
+            \"repository\": \"${CODEBUILD_SOURCE_REPO_URL}\",
+            \"branch\": \"${CODEBUILD_WEBHOOK_HEAD_REF}\",
+            \"commit\": \"${CODEBUILD_RESOLVED_SOURCE_VERSION}\",
+            \"stage\": \"validate\",
+            \"timestamp\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"
+          }," >> log-validate.json
         else
-          echo "{\"check\":\"git-secrets\",\"result\":\"FAILED\",\"error\":\"Secretos embebidos detectados\",\"timestamp\":\"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"}," >> trace.json
+          echo "✘ git-secrets FAILED"
+          echo "{
+            \"check\": \"git-secrets\",
+            \"result\": \"FAILED\",
+            \"details\": \"Secretos embebidos detectados\",
+            \"repository\": \"${CODEBUILD_SOURCE_REPO_URL}\",
+            \"branch\": \"${CODEBUILD_WEBHOOK_HEAD_REF}\",
+            \"commit\": \"${CODEBUILD_RESOLVED_SOURCE_VERSION}\",
+            \"stage\": \"validate\",
+            \"timestamp\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"
+          }," >> log-validate.json
           exit 1
         fi
-
 
       - echo "▶ Ejecutando escaneo de vulnerabilidades con Trivy (modo inteligente)..."
       - |
@@ -78,27 +97,14 @@ phases:
           checkov -d . --quiet --soft-fail
         fi
 
-      - sed -i '$ s/,$//' trace.json
-      - echo "]" >> trace.json
+      - sed -i '$ s/,$//' log-validate.json
+      - echo "]" >> log-validate.json
       - echo "📄 Archivo final de trazabilidad generado:"
-      - cat trace.json
+      - cat log-validate.json
   post_build:
     commands:
-      - echo "✅ Validaciones finalizadas. Listo para revisión del PR."
-      - echo "📦 Generando resumen JSON para trazabilidad..."
-      - |
-        cat > log-validate.json <<EOF
-        {
-          "repository": "${CODEBUILD_SOURCE_REPO_URL}",
-          "branch": "${CODEBUILD_WEBHOOK_HEAD_REF}",
-          "commit": "${CODEBUILD_RESOLVED_SOURCE_VERSION}",
-          "status": "${CODEBUILD_BUILD_SUCCEEDING}",
-          "stage": "validate",
-          "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-        }
-        EOF
-      - echo "Archivo JSON creado:"
+      - echo "📄 Archivo final de trazabilidad generado:"
       - cat log-validate.json
 
-      - echo "☁️ Subiendo a S3 -> s3://cb-logs-delga/validate/build-validate-${CODEBUILD_BUILD_ID}.json"
-      - aws s3 cp log-validate.json s3://cb-logs-delga/validate/build-validate-${CODEBUILD_BUILD_ID}.json
+      - echo "☁️ Subiendo log-validate.json a S3 → s3://cb-logs-delga/validate/log-validate-${CODEBUILD_BUILD_ID}.json"
+      - aws s3 cp log-validate.json s3://cb-logs-delga/validate/log-validate-${CODEBUILD_BUILD_ID}.json
