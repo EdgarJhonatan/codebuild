@@ -67,17 +67,128 @@ phases:
       - |
         if [ -f "package-lock.json" ] || [ -f "yarn.lock" ] || [ -f "npm-shrinkwrap.json" ]; then
           echo "🟢 Proyecto Node.js detectado"
-          trivy fs --exit-code 1 --scanners vuln --severity HIGH,CRITICAL .
+          if trivy fs --exit-code 1 --scanners vuln --severity HIGH,CRITICAL .; then
+            echo "✔ Trivy Node.js PASSED"
+            echo "{
+              \"check\": \"trivy\",
+              \"lenguaje\": \"nodejs\",
+              \"result\": \"PASSED\",
+              \"details\": \"Sin vulnerabilidades HIGH o CRITICAL\",
+              \"repository\": \"${CODEBUILD_SOURCE_REPO_URL}\",
+              \"branch\": \"${CODEBUILD_WEBHOOK_HEAD_REF}\",
+              \"commit\": \"${CODEBUILD_RESOLVED_SOURCE_VERSION}\",
+              \"stage\": \"validate\",
+              \"timestamp\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"
+            }," >> trace.json
+          else
+            echo "✘ Trivy Node.js FAILED"
+            echo "{
+              \"check\": \"trivy\",
+              \"lenguaje\": \"nodejs\",
+              \"result\": \"FAILED\",
+              \"details\": \"Vulnerabilidades HIGH o CRITICAL detectadas\",
+              \"repository\": \"${CODEBUILD_SOURCE_REPO_URL}\",
+              \"branch\": \"${CODEBUILD_WEBHOOK_HEAD_REF}\",
+              \"commit\": \"${CODEBUILD_RESOLVED_SOURCE_VERSION}\",
+              \"stage\": \"validate\",
+              \"timestamp\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"
+            }," >> trace.json
+            exit 1
+          fi
+
         elif [ -f "pom.xml" ]; then
-          echo "🟠 Proyecto Java detectado (Maven)"
-          trivy fs --exit-code 1 --scanners vuln --severity HIGH,CRITICAL .
+          echo "🟠 Proyecto Java (Maven) detectado"
+          if trivy fs --exit-code 1 --scanners vuln --severity HIGH,CRITICAL .; then
+            echo "✔ Trivy Java PASSED"
+            echo "{
+              \"check\": \"trivy\",
+              \"lenguaje\": \"java-maven\",
+              \"result\": \"PASSED\",
+              \"details\": \"Sin vulnerabilidades HIGH o CRITICAL\",
+              \"repository\": \"${CODEBUILD_SOURCE_REPO_URL}\",
+              \"branch\": \"${CODEBUILD_WEBHOOK_HEAD_REF}\",
+              \"commit\": \"${CODEBUILD_RESOLVED_SOURCE_VERSION}\",
+              \"stage\": \"validate\",
+              \"timestamp\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"
+            }," >> trace.json
+          else
+            echo "✘ Trivy Java FAILED"
+            echo "{
+              \"check\": \"trivy\",
+              \"lenguaje\": \"java-maven\",
+              \"result\": \"FAILED\",
+              \"details\": \"Vulnerabilidades HIGH o CRITICAL detectadas\",
+              \"repository\": \"${CODEBUILD_SOURCE_REPO_URL}\",
+              \"branch\": \"${CODEBUILD_WEBHOOK_HEAD_REF}\",
+              \"commit\": \"${CODEBUILD_RESOLVED_SOURCE_VERSION}\",
+              \"stage\": \"validate\",
+              \"timestamp\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"
+            }," >> trace.json
+            exit 1
+          fi
+
         elif [ -f "requirements.txt" ]; then
           echo "🔵 Proyecto Python detectado"
-          trivy fs --exit-code 1 --scanners vuln --severity HIGH,CRITICAL .
+          if trivy fs --exit-code 1 --scanners vuln --severity HIGH,CRITICAL .; then
+            echo "✔ Trivy Python PASSED"
+            echo "{
+              \"check\": \"trivy\",
+              \"lenguaje\": \"python\",
+              \"result\": \"PASSED\",
+              \"details\": \"Sin vulnerabilidades HIGH o CRITICAL\",
+              \"repository\": \"${CODEBUILD_SOURCE_REPO_URL}\",
+              \"branch\": \"${CODEBUILD_WEBHOOK_HEAD_REF}\",
+              \"commit\": \"${CODEBUILD_RESOLVED_SOURCE_VERSION}\",
+              \"stage\": \"validate\",
+              \"timestamp\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"
+            }," >> trace.json
+          else
+            echo "✘ Trivy Python FAILED"
+            echo "{
+              \"check\": \"trivy\",
+              \"lenguaje\": \"python\",
+              \"result\": \"FAILED\",
+              \"details\": \"Vulnerabilidades HIGH o CRITICAL detectadas\",
+              \"repository\": \"${CODEBUILD_SOURCE_REPO_URL}\",
+              \"branch\": \"${CODEBUILD_WEBHOOK_HEAD_REF}\",
+              \"commit\": \"${CODEBUILD_RESOLVED_SOURCE_VERSION}\",
+              \"stage\": \"validate\",
+              \"timestamp\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"
+            }," >> trace.json
+            exit 1
+          fi
+
         else
           echo "⚠️ No se detectó lenguaje compatible. Escaneo genérico con Trivy..."
-          trivy fs --exit-code 1 --scanners vuln --severity HIGH,CRITICAL .
-        fi
+          if trivy fs --exit-code 1 --scanners vuln --severity HIGH,CRITICAL .; then
+            echo "✔ Trivy Genérico PASSED"
+            echo "{
+              \"check\": \"trivy\",
+              \"lenguaje\": \"desconocido\",
+              \"result\": \"PASSED\",
+              \"details\": \"Sin vulnerabilidades HIGH o CRITICAL (genérico)\",
+              \"repository\": \"${CODEBUILD_SOURCE_REPO_URL}\",
+              \"branch\": \"${CODEBUILD_WEBHOOK_HEAD_REF}\",
+              \"commit\": \"${CODEBUILD_RESOLVED_SOURCE_VERSION}\",
+              \"stage\": \"validate\",
+              \"timestamp\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"
+            }," >> trace.json
+          else
+            echo "✘ Trivy Genérico FAILED"
+            echo "{
+              \"check\": \"trivy\",
+              \"lenguaje\": \"desconocido\",
+              \"result\": \"FAILED\",
+              \"details\": \"Vulnerabilidades HIGH o CRITICAL detectadas (genérico)\",
+              \"repository\": \"${CODEBUILD_SOURCE_REPO_URL}\",
+              \"branch\": \"${CODEBUILD_WEBHOOK_HEAD_REF}\",
+              \"commit\": \"${CODEBUILD_RESOLVED_SOURCE_VERSION}\",
+              \"stage\": \"validate\",
+              \"timestamp\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"
+            }," >> trace.json
+            exit 1
+          fi
+
 
       - echo "▶ Detectando tipo de proyecto..."
       - |
@@ -100,7 +211,6 @@ phases:
       - sed -i '$ s/,$//' log-validate.json
       - echo "]" >> log-validate.json
       - echo "📄 Archivo final de trazabilidad generado:"
-      - cat log-validate.json
   post_build:
     commands:
       - echo "📄 Archivo final de trazabilidad generado:"
