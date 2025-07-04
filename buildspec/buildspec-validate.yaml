@@ -79,7 +79,7 @@ phases:
               \"commit\": \"${CODEBUILD_RESOLVED_SOURCE_VERSION}\",
               \"stage\": \"validate\",
               \"timestamp\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"
-            }," >> trace.json
+            }," >> log-validate.json
           else
             echo "✘ Trivy Node.js FAILED"
             echo "{
@@ -92,7 +92,7 @@ phases:
               \"commit\": \"${CODEBUILD_RESOLVED_SOURCE_VERSION}\",
               \"stage\": \"validate\",
               \"timestamp\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"
-            }," >> trace.json
+            }," >> log-validate.json
             exit 1
           fi
 
@@ -110,7 +110,7 @@ phases:
               \"commit\": \"${CODEBUILD_RESOLVED_SOURCE_VERSION}\",
               \"stage\": \"validate\",
               \"timestamp\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"
-            }," >> trace.json
+            }," >> log-validate.json
           else
             echo "✘ Trivy Java FAILED"
             echo "{
@@ -123,7 +123,7 @@ phases:
               \"commit\": \"${CODEBUILD_RESOLVED_SOURCE_VERSION}\",
               \"stage\": \"validate\",
               \"timestamp\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"
-            }," >> trace.json
+            }," >> log-validate.json
             exit 1
           fi
 
@@ -141,7 +141,7 @@ phases:
               \"commit\": \"${CODEBUILD_RESOLVED_SOURCE_VERSION}\",
               \"stage\": \"validate\",
               \"timestamp\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"
-            }," >> trace.json
+            }," >> log-validate.json
           else
             echo "✘ Trivy Python FAILED"
             echo "{
@@ -154,7 +154,7 @@ phases:
               \"commit\": \"${CODEBUILD_RESOLVED_SOURCE_VERSION}\",
               \"stage\": \"validate\",
               \"timestamp\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"
-            }," >> trace.json
+            }," >> log-validate.json
             exit 1
           fi
 
@@ -172,7 +172,7 @@ phases:
               \"commit\": \"${CODEBUILD_RESOLVED_SOURCE_VERSION}\",
               \"stage\": \"validate\",
               \"timestamp\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"
-            }," >> trace.json
+            }," >> log-validate.json
           else
             echo "✘ Trivy Genérico FAILED"
             echo "{
@@ -185,7 +185,7 @@ phases:
               \"commit\": \"${CODEBUILD_RESOLVED_SOURCE_VERSION}\",
               \"stage\": \"validate\",
               \"timestamp\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"
-            }," >> trace.json
+            }," >> log-validate.json
             exit 1
           fi
 
