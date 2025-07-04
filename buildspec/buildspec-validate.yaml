@@ -188,7 +188,7 @@ phases:
             }," >> log-validate.json
             exit 1
           fi
-
+        fi
       - echo "▶ Detectando tipo de proyecto..."
       - |
         if [ -f "serverless.yml" ]; then
