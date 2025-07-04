@@ -33,8 +33,16 @@ phases:
 
   build:
     commands:
+      - echo "[" > trace.json
       - echo "▶ Ejecutando análisis de secretos con git-secrets..."
-      - git secrets --scan $(find . -type f -name '*.js') || { echo '❌ Se detectaron secretos embebidos.'; exit 1; }
+      - |
+        if git secrets --scan $(find . -type f -name '*.js'); then
+          echo "{\"check\":\"git-secrets\",\"result\":\"PASSED\",\"error\":\"\",\"timestamp\":\"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"}," >> trace.json
+        else
+          echo "{\"check\":\"git-secrets\",\"result\":\"FAILED\",\"error\":\"Secretos embebidos detectados\",\"timestamp\":\"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"}," >> trace.json
+          exit 1
+        fi
+
 
       - echo "▶ Ejecutando escaneo de vulnerabilidades con Trivy (modo inteligente)..."
       - |
@@ -70,6 +78,8 @@ phases:
           checkov -d . --quiet --soft-fail
         fi
 
+      - sed -i '$ s/,$//' trace.json
+      - echo "]" >> trace.json
   post_build:
     commands:
       - echo "✅ Validaciones finalizadas. Listo para revisión del PR."
