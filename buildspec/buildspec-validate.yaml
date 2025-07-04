@@ -75,7 +75,7 @@ phases:
       - echo "✅ Validaciones finalizadas. Listo para revisión del PR."
       - echo "📦 Generando resumen JSON para trazabilidad..."
       - |
-        cat > log.json <<EOF
+        cat > log-validate.json <<EOF
         {
           "repository": "${CODEBUILD_SOURCE_REPO_URL}",
           "branch": "${CODEBUILD_WEBHOOK_HEAD_REF}",
@@ -86,7 +86,7 @@ phases:
         }
         EOF
       - echo "Archivo JSON creado:"
-      - cat log.json
+      - cat log-validate.json
 
       - echo "☁️ Subiendo a S3 -> s3://cb-logs-delga/validate/build-validate-${CODEBUILD_BUILD_ID}.json"
-      - aws s3 cp build-validate.json s3://cb-logs-delga/validate/build-validate-${CODEBUILD_BUILD_ID}.json
+      - aws s3 cp log-validate.json s3://cb-logs-delga/validate/build-validate-${CODEBUILD_BUILD_ID}.json
