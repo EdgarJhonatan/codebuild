@@ -70,25 +70,25 @@ phases:
           checkov -d . --quiet --soft-fail
         fi
 
-post_build:
-  commands:
-    - echo "✅ Validaciones finalizadas. Listo para revisión del PR."
-    - echo "📦 Generando resumen JSON para trazabilidad..."
+  post_build:
+    commands:
+      - echo "✅ Validaciones finalizadas. Listo para revisión del PR."
+      - echo "📦 Generando resumen JSON para trazabilidad..."
 
-    - |
-      cat > build-validate.json <<EOF
-      {
-        "repository": "${CODEBUILD_SOURCE_REPO_URL}",
-        "branch": "${CODEBUILD_WEBHOOK_HEAD_REF}",
-        "commit": "${CODEBUILD_RESOLVED_SOURCE_VERSION}",
-        "status": "${CODEBUILD_BUILD_SUCCEEDING}",
-        "stage": "validate",
-        "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-      }
-      EOF
+      - |
+        cat > build-validate.json <<EOF
+        {
+          "repository": "${CODEBUILD_SOURCE_REPO_URL}",
+          "branch": "${CODEBUILD_WEBHOOK_HEAD_REF}",
+          "commit": "${CODEBUILD_RESOLVED_SOURCE_VERSION}",
+          "status": "${CODEBUILD_BUILD_SUCCEEDING}",
+          "stage": "validate",
+          "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+        }
+        EOF
 
-    - echo "📄 Archivo generado:"
-    - cat build-validate.json
+      - echo "📄 Archivo generado:"
+      - cat build-validate.json
 
-    - echo "☁️ Subiendo a S3: s3://cb-logs-delga/validate/build-validate-${CODEBUILD_BUILD_ID}.json"
-    - aws s3 cp build-validate.json s3://cb-logs-delga/validate/build-validate-${CODEBUILD_BUILD_ID}.json
+      - echo "☁️ Subiendo a S3: s3://cb-logs-delga/validate/build-validate-${CODEBUILD_BUILD_ID}.json"
+      - aws s3 cp build-validate.json s3://cb-logs-delga/validate/build-validate-${CODEBUILD_BUILD_ID}.json
