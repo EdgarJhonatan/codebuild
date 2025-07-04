@@ -87,3 +87,6 @@ phases:
         EOF
       - echo "Archivo JSON creado:"
       - cat log.json
+
+      - echo "☁️ Subiendo a S3 -> s3://cb-logs-delga/validate/build-validate-${CODEBUILD_BUILD_ID}.json"
+      - aws s3 cp build-validate.json s3://cb-logs-delga/validate/build-validate-${CODEBUILD_BUILD_ID}.json
