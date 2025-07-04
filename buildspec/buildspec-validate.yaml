@@ -75,13 +75,15 @@ phases:
       - echo "✅ Validaciones finalizadas. Listo para revisión del PR."
       - echo "📦 Generando resumen JSON para trazabilidad..."
       - |
-        cat > config.json <<EOF
+        cat > log.json <<EOF
         {
           "repository": "${CODEBUILD_SOURCE_REPO_URL}",
-          "nombre": "MiAplicacion",
-          "version": "1.0",
-          "entorno": "desarrollo"
+          "branch": "${CODEBUILD_WEBHOOK_HEAD_REF}",
+          "commit": "${CODEBUILD_RESOLVED_SOURCE_VERSION}",
+          "status": "${CODEBUILD_BUILD_SUCCEEDING}",
+          "stage": "validate",
+          "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
         }
         EOF
       - echo "Archivo JSON creado:"
-      - cat config.json
+      - cat log.json
