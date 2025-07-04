@@ -189,7 +189,6 @@ phases:
             exit 1
           fi
 
-
       - echo "▶ Detectando tipo de proyecto..."
       - |
         if [ -f "serverless.yml" ]; then
