@@ -218,7 +218,7 @@ phases:
               \"commit\": \"${CODEBUILD_RESOLVED_SOURCE_VERSION}\",
               \"stage\": \"validate\",
               \"timestamp\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"
-            }," >> trace.json
+            }," >> log-validate.json
           else
             echo "✘ Checkov FAILED"
             echo "{
@@ -231,7 +231,7 @@ phases:
               \"commit\": \"${CODEBUILD_RESOLVED_SOURCE_VERSION}\",
               \"stage\": \"validate\",
               \"timestamp\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"
-            }," >> trace.json
+            }," >> log-validate.json
             exit 1
           fi
         fi
