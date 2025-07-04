@@ -199,12 +199,41 @@ phases:
           echo "🐳 Proyecto Docker detectado (solo detección, sin escaneo de imagen aún)"
         fi
 
+      - |
         if find . -name "*.tf" -o -name "*.yml" -o -name "*.yaml" -o -name "*.json" | grep -q .; then
           echo "🏗️ Proyecto IaC detectado (YAML, JSON o Terraform)"
           echo "🧹 Limpiando carpetas temporales para evitar falsos positivos..."
           rm -rf git-secrets
           echo "▶ Ejecutando análisis con Checkov..."
-          checkov -d . --quiet --soft-fail
+
+          if checkov -d . --quiet --soft-fail; then
+            echo "✔ Checkov PASSED"
+            echo "{
+              \"check\": \"checkov\",
+              \"tipo\": \"IaC\",
+              \"result\": \"PASSED\",
+              \"details\": \"Sin errores críticos detectados por Checkov\",
+              \"repository\": \"${CODEBUILD_SOURCE_REPO_URL}\",
+              \"branch\": \"${CODEBUILD_WEBHOOK_HEAD_REF}\",
+              \"commit\": \"${CODEBUILD_RESOLVED_SOURCE_VERSION}\",
+              \"stage\": \"validate\",
+              \"timestamp\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"
+            }," >> trace.json
+          else
+            echo "✘ Checkov FAILED"
+            echo "{
+              \"check\": \"checkov\",
+              \"tipo\": \"IaC\",
+              \"result\": \"FAILED\",
+              \"details\": \"Errores críticos detectados por Checkov\",
+              \"repository\": \"${CODEBUILD_SOURCE_REPO_URL}\",
+              \"branch\": \"${CODEBUILD_WEBHOOK_HEAD_REF}\",
+              \"commit\": \"${CODEBUILD_RESOLVED_SOURCE_VERSION}\",
+              \"stage\": \"validate\",
+              \"timestamp\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"
+            }," >> trace.json
+            exit 1
+          fi
         fi
 
       - sed -i '$ s/,$//' log-validate.json
