@@ -5,7 +5,7 @@ module.exports.hello = async (event) => {
     statusCode: 200,
     body: JSON.stringify(
       {
-        message: '¡Hola desde Lambda probando commit probando PR!',
+        message: '¡Hola desde Lambda probando commit con VPC!',
         input: event,
       },
       null,
