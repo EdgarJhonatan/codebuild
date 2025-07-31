@@ -14,3 +14,8 @@ phases:
     commands:
       - echo "▶ Desplegando Lambda con Serverless..."
       - sls deploy --stage dev
+
+artifacts:
+  files:
+    - '**/*'
+  name: BuildArtif
