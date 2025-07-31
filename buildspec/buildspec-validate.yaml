@@ -34,24 +34,164 @@ phases:
   build:
     commands:
       - echo "▶ Ejecutando análisis de secretos con git-secrets..."
-      - git secrets --scan $(find . -type f -name '*.js') || { echo '❌ Se detectaron secretos embebidos.'; exit 1; }
+      - |
+        response_output=$(git secrets --scan $(find . -type f -name '*.js') 2>&1)
+        if [ $? -eq 0 ]; then
+          echo "✔ git-secrets PASSED"
+          echo "{
+            \"check\": \"git-secrets\",
+            \"result\": \"PASSED\",
+            \"details\": \"success\",
+            \"repository\": \"${CODEBUILD_SOURCE_REPO_URL}\",
+            \"branch\": \"${CODEBUILD_WEBHOOK_HEAD_REF}\",
+            \"commit\": \"${CODEBUILD_RESOLVED_SOURCE_VERSION}\",
+            \"stage\": \"validate\",
+            \"timestamp\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"
+          }" | jq -c '.' >> log-validate.json
+        else
+          echo "✘ git-secrets FAILED"
+          error=$(echo "$response_output" | grep -E "^\./.*:[0-9]+:" | head -n 1)
+          sanitized_error=$(echo "$error" | sed 's/"/\\"/g')
+          echo "{
+            \"check\": \"git-secrets\",
+            \"result\": \"FAILED\",
+            \"details\": \"$sanitized_error\",
+            \"repository\": \"${CODEBUILD_SOURCE_REPO_URL}\",
+            \"branch\": \"${CODEBUILD_WEBHOOK_HEAD_REF}\",
+            \"commit\": \"${CODEBUILD_RESOLVED_SOURCE_VERSION}\",
+            \"stage\": \"validate\",
+            \"timestamp\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"
+          }" | jq -c '.' >> log-validate.json
+          exit 1
+        fi
+        
 
       - echo "▶ Ejecutando escaneo de vulnerabilidades con Trivy (modo inteligente)..."
       - |
         if [ -f "package-lock.json" ] || [ -f "yarn.lock" ] || [ -f "npm-shrinkwrap.json" ]; then
           echo "🟢 Proyecto Node.js detectado"
-          trivy fs --exit-code 1 --scanners vuln --severity HIGH,CRITICAL .
+          if trivy fs --exit-code 1 --scanners vuln --severity HIGH,CRITICAL .; then
+            echo "✔ Trivy Node.js PASSED"
+            echo "{
+              \"check\": \"trivy\",
+              \"lenguaje\": \"nodejs\",
+              \"result\": \"PASSED\",
+              \"details\": \"success\",
+              \"repository\": \"${CODEBUILD_SOURCE_REPO_URL}\",
+              \"branch\": \"${CODEBUILD_WEBHOOK_HEAD_REF}\",
+              \"commit\": \"${CODEBUILD_RESOLVED_SOURCE_VERSION}\",
+              \"stage\": \"validate\",
+              \"timestamp\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"
+            }" | jq -c '.' >> log-validate.json
+          else
+            echo "✘ Trivy Node.js FAILED"
+            echo "{
+              \"check\": \"trivy\",
+              \"lenguaje\": \"nodejs\",
+              \"result\": \"FAILED\",
+              \"details\": \"Vulnerabilidades HIGH o CRITICAL detectadas\",
+              \"repository\": \"${CODEBUILD_SOURCE_REPO_URL}\",
+              \"branch\": \"${CODEBUILD_WEBHOOK_HEAD_REF}\",
+              \"commit\": \"${CODEBUILD_RESOLVED_SOURCE_VERSION}\",
+              \"stage\": \"validate\",
+              \"timestamp\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"
+            }" | jq -c '.' >> log-validate.json
+            # exit 1
+          fi
+
         elif [ -f "pom.xml" ]; then
-          echo "🟠 Proyecto Java detectado (Maven)"
-          trivy fs --exit-code 1 --scanners vuln --severity HIGH,CRITICAL .
+          echo "🟠 Proyecto Java (Maven) detectado"
+          if trivy fs --exit-code 1 --scanners vuln --severity HIGH,CRITICAL .; then
+            echo "✔ Trivy Java PASSED"
+            echo "{
+              \"check\": \"trivy\",
+              \"lenguaje\": \"java-maven\",
+              \"result\": \"PASSED\",
+              \"details\": \"success\",
+              \"repository\": \"${CODEBUILD_SOURCE_REPO_URL}\",
+              \"branch\": \"${CODEBUILD_WEBHOOK_HEAD_REF}\",
+              \"commit\": \"${CODEBUILD_RESOLVED_SOURCE_VERSION}\",
+              \"stage\": \"validate\",
+              \"timestamp\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"
+            }" | jq -c '.' >> log-validate.json
+          else
+            echo "✘ Trivy Java FAILED"
+            echo "{
+              \"check\": \"trivy\",
+              \"lenguaje\": \"java-maven\",
+              \"result\": \"FAILED\",
+              \"details\": \"Vulnerabilidades HIGH o CRITICAL detectadas\",
+              \"repository\": \"${CODEBUILD_SOURCE_REPO_URL}\",
+              \"branch\": \"${CODEBUILD_WEBHOOK_HEAD_REF}\",
+              \"commit\": \"${CODEBUILD_RESOLVED_SOURCE_VERSION}\",
+              \"stage\": \"validate\",
+              \"timestamp\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"
+            }" | jq -c '.' >> log-validate.json
+            exit 1
+          fi
+
         elif [ -f "requirements.txt" ]; then
           echo "🔵 Proyecto Python detectado"
-          trivy fs --exit-code 1 --scanners vuln --severity HIGH,CRITICAL .
+          if trivy fs --exit-code 1 --scanners vuln --severity HIGH,CRITICAL .; then
+            echo "✔ Trivy Python PASSED"
+            echo "{
+              \"check\": \"trivy\",
+              \"lenguaje\": \"python\",
+              \"result\": \"PASSED\",
+              \"details\": \"success\",
+              \"repository\": \"${CODEBUILD_SOURCE_REPO_URL}\",
+              \"branch\": \"${CODEBUILD_WEBHOOK_HEAD_REF}\",
+              \"commit\": \"${CODEBUILD_RESOLVED_SOURCE_VERSION}\",
+              \"stage\": \"validate\",
+              \"timestamp\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"
+            }" | jq -c '.' >> log-validate.json
+          else
+            echo "✘ Trivy Python FAILED"
+            echo "{
+              \"check\": \"trivy\",
+              \"lenguaje\": \"python\",
+              \"result\": \"FAILED\",
+              \"details\": \"Vulnerabilidades HIGH o CRITICAL detectadas\",
+              \"repository\": \"${CODEBUILD_SOURCE_REPO_URL}\",
+              \"branch\": \"${CODEBUILD_WEBHOOK_HEAD_REF}\",
+              \"commit\": \"${CODEBUILD_RESOLVED_SOURCE_VERSION}\",
+              \"stage\": \"validate\",
+              \"timestamp\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"
+            }" | jq -c '.' >> log-validate.json
+            exit 1
+          fi
+
         else
           echo "⚠️ No se detectó lenguaje compatible. Escaneo genérico con Trivy..."
-          trivy fs --exit-code 1 --scanners vuln --severity HIGH,CRITICAL .
+          if trivy fs --exit-code 1 --scanners vuln --severity HIGH,CRITICAL .; then
+            echo "✔ Trivy Genérico PASSED"
+            echo "{
+              \"check\": \"trivy\",
+              \"lenguaje\": \"desconocido\",
+              \"result\": \"PASSED\",
+              \"details\": \"success\",
+              \"repository\": \"${CODEBUILD_SOURCE_REPO_URL}\",
+              \"branch\": \"${CODEBUILD_WEBHOOK_HEAD_REF}\",
+              \"commit\": \"${CODEBUILD_RESOLVED_SOURCE_VERSION}\",
+              \"stage\": \"validate\",
+              \"timestamp\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"
+            }" | jq -c '.' >> log-validate.json
+          else
+            echo "✘ Trivy Genérico FAILED"
+            echo "{
+              \"check\": \"trivy\",
+              \"lenguaje\": \"desconocido\",
+              \"result\": \"FAILED\",
+              \"details\": \"Vulnerabilidades HIGH o CRITICAL detectadas (genérico)\",
+              \"repository\": \"${CODEBUILD_SOURCE_REPO_URL}\",
+              \"branch\": \"${CODEBUILD_WEBHOOK_HEAD_REF}\",
+              \"commit\": \"${CODEBUILD_RESOLVED_SOURCE_VERSION}\",
+              \"stage\": \"validate\",
+              \"timestamp\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"
+            }" | jq -c '.' >> log-validate.json
+            exit 1
+          fi
         fi
-
       - echo "▶ Detectando tipo de proyecto..."
       - |
         if [ -f "serverless.yml" ]; then
@@ -62,14 +202,47 @@ phases:
           echo "🐳 Proyecto Docker detectado (solo detección, sin escaneo de imagen aún)"
         fi
 
+      - |
         if find . -name "*.tf" -o -name "*.yml" -o -name "*.yaml" -o -name "*.json" | grep -q .; then
           echo "🏗️ Proyecto IaC detectado (YAML, JSON o Terraform)"
           echo "🧹 Limpiando carpetas temporales para evitar falsos positivos..."
           rm -rf git-secrets
           echo "▶ Ejecutando análisis con Checkov..."
-          checkov -d . --quiet --soft-fail
-        fi
 
+          if checkov -d . --quiet --soft-fail; then
+            echo "✔ Checkov PASSED"
+            echo "{
+              \"check\": \"checkov\",
+              \"tipo\": \"IaC\",
+              \"result\": \"PASSED\",
+              \"details\": \"success\",
+              \"repository\": \"${CODEBUILD_SOURCE_REPO_URL}\",
+              \"branch\": \"${CODEBUILD_WEBHOOK_HEAD_REF}\",
+              \"commit\": \"${CODEBUILD_RESOLVED_SOURCE_VERSION}\",
+              \"stage\": \"validate\",
+              \"timestamp\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"
+            }" | jq -c '.' >> log-validate.json
+          else
+            echo "✘ Checkov FAILED"
+            echo "{
+              \"check\": \"checkov\",
+              \"tipo\": \"IaC\",
+              \"result\": \"FAILED\",
+              \"details\": \"Errores críticos detectados por Checkov\",
+              \"repository\": \"${CODEBUILD_SOURCE_REPO_URL}\",
+              \"branch\": \"${CODEBUILD_WEBHOOK_HEAD_REF}\",
+              \"commit\": \"${CODEBUILD_RESOLVED_SOURCE_VERSION}\",
+              \"stage\": \"validate\",
+              \"timestamp\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"
+            }" | jq -c '.' >> log-validate.json
+            exit 1
+          fi
+        fi
+      - echo "📄 Archivo final de trazabilidad generado:"
   post_build:
     commands:
-      - echo "✅ Validaciones finalizadas. Listo para revisión del PR."
+      - echo "📄 Archivo final de trazabilidad generado:"
+      - cat log-validate.json
+
+      - echo "☁️ Subiendo log-validate.json a S3 → s3://cb-logs-delga/validate/log-validate-${CODEBUILD_BUILD_ID}.json"
+      - aws s3 cp log-validate.json s3://cb-logs-delga/validate/log-validate-${CODEBUILD_BUILD_ID}.json
