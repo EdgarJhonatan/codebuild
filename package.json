@@ -1,5 +1,5 @@
 {
-  "name": "mi-lambda-demo",
+  "name": "mi-lambda-demo-2",
   "version": "1.0.0",
   "description": "POC de Lambda con Serverless Framework y CodeBuild",
   "main": "handler.js",
