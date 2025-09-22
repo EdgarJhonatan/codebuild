@@ -1,0 +1,6 @@
+version: 2
+updates:
+  - package-ecosystem: "npm" # Ecosistema (Node.js usa npm)
+    directory: "/"           # Ubicación del package.json
+    schedule:
+      interval: "daily"      # Frecuencia: daily, weekly o monthly

@@ -244,5 +244,5 @@ phases:
       - echo "📄 Archivo final de trazabilidad generado:"
       - cat log-validate.json
 
-      - echo "☁️ Subiendo log-validate.json a S3 → s3://cb-logs-delga/validate/log-validate-${CODEBUILD_BUILD_ID}.json"
-      - aws s3 cp log-validate.json s3://cb-logs-delga/validate/log-validate-${CODEBUILD_BUILD_ID}.json
+      # - echo "☁️ Subiendo log-validate.json a S3 → s3://cb-logs-delga/validate/log-validate-${CODEBUILD_BUILD_ID}.json"
+      # - aws s3 cp log-validate.json s3://cb-logs-delga/validate/log-validate-${CODEBUILD_BUILD_ID}.json
