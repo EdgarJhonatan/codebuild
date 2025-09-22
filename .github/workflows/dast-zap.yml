@@ -1,7 +1,13 @@
 name: DAST - OWASP ZAP (Baseline)
 
 on:
-  workflow_dispatch:    # lo ejecutas manualmente desde Actions
+  workflow_dispatch:      # Permite ejecutarlo manualmente desde Actions
+  push:                   # Lo dispara automáticamente
+    branches:
+      - main              # Solo cuando haces push/merge a main
+  pull_request:           # (Opcional) también al abrir PRs hacia main
+    branches:
+      - main
 
 jobs:
   zap_scan:
