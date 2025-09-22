@@ -6,7 +6,7 @@ on:
   pull_request:
     branches: [ "main", "develop", "release/*", "feature/*" ]
   schedule:
-    - cron: '0 0 * * 0' # Corre cada domingo a medianoche (UTC)
+    - cron: '0 0 * * 0' # Corre cada domingo a medianoche (UTC) sss
 
 jobs:
   analyze:
