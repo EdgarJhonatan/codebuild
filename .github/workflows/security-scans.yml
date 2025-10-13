@@ -1,0 +1,42 @@
+name: Security Scans
+
+on:
+  schedule:
+    - cron: '0 2 * * *'  # Diario a las 2 AM
+  workflow_dispatch:
+
+jobs:
+  # Secrets Scanning
+  secrets:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: TruffleHog Secrets Scan
+        uses: trufflesecurity/trufflehog@main
+        with:
+          path: ./
+
+  # Container Security
+  container-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build Docker Image
+        run: docker build -t myapp .
+      - name: Trivy Container Scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: 'myapp'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+
+  # Infrastructure as Code Security
+  iac-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Checkov IaC Scan
+        uses: bridgecrewio/checkov-action@master
+        with:
+          directory: .
+          framework: terraform
